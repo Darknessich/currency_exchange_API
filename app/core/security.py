@@ -1,8 +1,8 @@
-from xmlrpc.client import boolean
 import jwt
 import random
 import string
 from hashlib import md5
+from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from app.core.config import settings
@@ -25,7 +25,7 @@ def generate_random_salt() -> str:
     )
 
 
-def generate_password_hash(password: str, salt: str) -> str:
+async def generate_password_hash(password: str, salt: str) -> str:
     dynamic_salt = salt.encode()
     server_salt = settings.auth.salt.encode()
     password_hash = md5(password.encode())
@@ -38,12 +38,18 @@ def generate_password_hash(password: str, salt: str) -> str:
     return password_hash.hexdigest()
 
 
-def validate_password(password, password_hash, salt) -> bool:
-    return generate_password_hash(password, salt) == password_hash
+async def validate_password(password, password_hash, salt) -> bool:
+    return password_hash == await generate_password_hash(password, salt)
 
 
-def create_jwt_token(data: dict) -> str:
-    return jwt.encode(data, settings.auth.secret, algorithm=settings.auth.algorithm)
+def create_jwt_token(data: dict, life_time: timedelta | None = None) -> str:
+    encode = data.copy()
+    expire = datetime.now(timezone.utc)
+    if not life_time:
+        life_time = timedelta(minutes=settings.auth.token_life_time)
+    expire += life_time
+    encode.update({"exp": expire})
+    return jwt.encode(encode, settings.auth.secret, algorithm=settings.auth.algorithm)
 
 
 def get_user_from_token(token: str = Depends(oauth2_scheme)) -> str:
