@@ -9,7 +9,7 @@ from app.db.models import User
 
 class UserRepository(ABC):
     @abstractmethod
-    async def get_users(self) -> list[User]:
+    async def get_user(self, username: str) -> User | None:
         pass
 
     @abstractmethod
@@ -21,13 +21,15 @@ class SqlAlchemyUserRepository(UserRepository):
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def get_users(self) -> list[User]:
-        result = await self._session.execute(select(User))
-        return list(result.scalars().all())
+    async def get_user(self, username: str) -> User | None:
+        result = await self._session.execute(
+            select(User).where(User.username == username)
+        )
+        return result.scalars().one_or_none()
 
     async def create_user(self, user: UserLogin) -> User:
         user_salt = generate_random_salt()
-        user.password = await generate_password_hash(user.password, user_salt)
+        user.password = generate_password_hash(user.password, user_salt)
         new_user = User(salt=user_salt, **user.model_dump())
         self._session.add(new_user)
         await self._session.commit()

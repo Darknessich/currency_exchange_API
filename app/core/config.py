@@ -34,6 +34,7 @@ class AuthSettings(BaseSettings):
 
     repeat: int
     secret: str
+    algorithm: str
     salt: str
     salt_len: int
 
