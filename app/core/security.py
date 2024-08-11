@@ -1,3 +1,4 @@
+from xmlrpc.client import boolean
 import jwt
 import random
 import string
@@ -10,13 +11,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
 class CredentialsExeption(HTTPException):
-    def __init__(
-        self,
-        detail: str,
-        status_code: int = status.HTTP_401_UNAUTHORIZED,
-        headers: dict[str, str] | None = None,
-    ):
-        super().__init__(status_code=status_code, detail=detail, headers=headers)
+    def __init__(self, detail: str):
+        super().__init__(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=detail,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 def generate_random_salt() -> str:
@@ -25,7 +25,7 @@ def generate_random_salt() -> str:
     )
 
 
-def generate_password_hash(password: str, salt: str):
+def generate_password_hash(password: str, salt: str) -> str:
     dynamic_salt = salt.encode()
     server_salt = settings.auth.salt.encode()
     password_hash = md5(password.encode())
@@ -38,18 +38,16 @@ def generate_password_hash(password: str, salt: str):
     return password_hash.hexdigest()
 
 
-def validate_password(password, password_hash, salt):
+def validate_password(password, password_hash, salt) -> bool:
     return generate_password_hash(password, salt) == password_hash
 
 
-def create_jwt_token(data: dict):
-    return jwt.encode(data, settings.auth.secret, algorithms=[settings.auth.algorithm])
+def create_jwt_token(data: dict) -> str:
+    return jwt.encode(data, settings.auth.secret, algorithm=settings.auth.algorithm)
 
 
-def get_user_from_token(token: str = Depends(oauth2_scheme)):
-    exception = CredentialsExeption(
-        "Could not validate credentials", headers={"WWW-authenticate": "Bearer"}
-    )
+def get_user_from_token(token: str = Depends(oauth2_scheme)) -> str:
+    exception = CredentialsExeption("Could not validate credentials")
     try:
         payload = jwt.decode(
             token, settings.auth.secret, algorithms=[settings.auth.algorithm]
