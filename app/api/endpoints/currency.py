@@ -19,3 +19,15 @@ async def convert(
             status_code=status.HTTP_403_FORBIDDEN, detail="access is denied"
         )
     return await api.convert(query)
+
+
+@router.get("/list")
+async def currency_list(
+    user: str = Depends(get_user_from_token),
+    repo: UserRepository = Depends(get_user_repository),
+):
+    if not await repo.get_user(user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="access is denied"
+        )
+    return await api.list()

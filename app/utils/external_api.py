@@ -13,6 +13,13 @@ _ROUTES = {
 _HEADERS = {"apikey": settings.external_api_token}
 
 
+async def list() -> dict[str, str]:
+    response = get(_URL + _ROUTES["list"], headers=_HEADERS)
+    if response.status_code != 200:
+        raise HTTPException(response.status_code, detail=response.reason)
+    return response.json()["currencies"]
+
+
 async def convert(query: Convert) -> Convert:
     query_str = (
         f"?to={query.currency_to}&from={query.currency_from}&amount={query.amount}"
