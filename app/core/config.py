@@ -6,9 +6,9 @@ class AppSettings(BaseSettings):
         env_prefix="app_", env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
-    host: str
-    port: int
-    log_level: str
+    host: str = ""
+    port: int = 0
+    log_level: str = ""
 
 
 class DatabaseSettings(BaseSettings):
@@ -35,6 +35,7 @@ class AuthSettings(BaseSettings):
     repeat: int
     secret: str
     algorithm: str
+    token_life_time: int
     salt: str
     salt_len: int
 
@@ -47,6 +48,7 @@ class Settings(BaseSettings):
     app: AppSettings = AppSettings()
     db: DatabaseSettings = DatabaseSettings()
     auth: AuthSettings = AuthSettings()
+    external_api_token: str
 
 
 settings = Settings()
