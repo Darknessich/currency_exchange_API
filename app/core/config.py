@@ -32,7 +32,10 @@ class AuthSettings(BaseSettings):
         env_prefix="auth_", env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
-    pass
+    repeat: int
+    secret: str
+    salt: str
+    salt_len: int
 
 
 class Settings(BaseSettings):
